@@ -3,585 +3,434 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador Kardashev Tipo II - Civilização Estelar & Esfera de Dyson</title>
+    <title>Simulador Kardashev: Nível 2.0 - Civilização Estelar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-color: #02040a;
-            --panel-bg: rgba(10, 15, 30, 0.90);
-            --border-color: rgba(245, 158, 11, 0.35);
+            --bg-dark: #050811;
+            --card-bg: #0d1322;
+            --border-color: #1e293b;
             --accent-gold: #f59e0b;
-            --accent-cyan: #38bdf8;
-            --accent-green: #10b981;
-            --accent-purple: #a855f7;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            user-select: none;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            background-color: var(--bg-dark);
+            color: #f1f5f9;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
-        header {
-            height: 60px;
-            background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(2, 4, 10, 0.8) 100%);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 25px;
-            z-index: 10;
-        }
-
-        header h1 {
-            font-size: 1.05rem;
-            letter-spacing: 2px;
-            color: var(--accent-gold);
-            text-transform: uppercase;
-        }
-
-        .status-badge {
-            font-size: 0.75rem;
-            padding: 4px 12px;
-            border-radius: 12px;
-            background: rgba(245, 158, 11, 0.15);
-            border: 1px solid var(--accent-gold);
-            color: var(--accent-gold);
-            letter-spacing: 1px;
-        }
-
-        .main-container {
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            height: calc(100vh - 60px);
-            position: relative;
-        }
-
-        /* PAINEL LATERAL DE CONTROLE */
-        .control-panel {
-            background: var(--panel-bg);
-            border-right: 1px solid var(--border-color);
-            backdrop-filter: blur(12px);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            overflow-y: auto;
-            z-index: 5;
-        }
-
-        .kardashev-box {
-            background: radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, rgba(2, 4, 10, 0.8) 100%);
-            border: 1px solid var(--accent-gold);
-            border-radius: 10px;
-            padding: 16px;
-            text-align: center;
-            box-shadow: 0 0 25px rgba(245, 158, 11, 0.2);
-        }
-
-        .kardashev-score {
-            font-size: 2.4rem;
-            font-family: monospace;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 0 0 15px var(--accent-gold);
-            margin: 4px 0;
-        }
-
-        .section-title {
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--accent-gold);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 6px;
-        }
-
-        .metric-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .metric-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-        }
-
-        .metric-value {
-            font-family: monospace;
-            font-weight: bold;
-            color: var(--accent-gold);
-        }
-
-        input[type="range"] {
-            width: 100%;
-            height: 6px;
-            border-radius: 3px;
-            background: rgba(255, 255, 255, 0.1);
-            outline: none;
-            accent-color: var(--accent-gold);
-            cursor: pointer;
-        }
-
-        .toggle-box {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 0.78rem;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 36px;
-            height: 18px;
-        }
-
-        .switch input { opacity: 0; width: 0; height: 0; }
-
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(255,255,255,0.2); transition: .3s; border-radius: 18px;
-        }
-
-        .slider:before {
-            position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px;
-            background-color: white; transition: .3s; border-radius: 50%;
-        }
-
-        input:checked + .slider { background-color: var(--accent-gold); }
-        input:checked + .slider:before { transform: translateX(18px); }
-
-        .info-card {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 0.8rem;
-            line-height: 1.45;
-            color: var(--text-muted);
-        }
-
-        .info-card strong {
-            color: var(--text-main);
-        }
-
-        /* VIEWPORT CANVAS SIMULAÇÃO */
-        .viewport {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, #0a0e1a 0%, #02040a 100%);
-            overflow: hidden;
-        }
-
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        .hud-overlay {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: var(--panel-bg);
+        .card {
+            background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
-            font-family: monospace;
-            font-size: 0.75rem;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            backdrop-filter: blur(10px);
         }
 
-        .hud-line {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
+        .custom-slider-gold {
+            accent-color: var(--accent-gold);
         }
 
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        .glow-gold {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+        }
+
+        .solar-glow {
+            animation: pulse-solar 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse-solar {
+            0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(245, 158, 11, 0.6); }
+        }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col p-4 md:p-6">
 
-    <header>
-        <h1>CIVILIZAÇÃO TIPO II: CAPTURA ESTELAR TOTAL (ESFERA DE DYSON)</h1>
-        <div class="status-badge">SISTEMA SOLAR INTERNO: ESTÁVEL</div>
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto w-full mb-6 flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-4 gap-4">
+        <div>
+            <span class="text-xs font-mono uppercase tracking-widest text-amber-400">Simulador de Evolução de Civilização</span>
+            <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-3">
+                Escala Kardashev: <span id="kardashevDisplay" class="text-amber-400 font-mono">2.000</span>
+                <span class="text-xs px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold">Nível 2.0 - Civilização Estelar</span>
+            </h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="btnAdvance" onclick="advanceYear()" class="bg-amber-500 hover:bg-amber-400 text-gray-950 font-bold px-5 py-2.5 rounded-lg shadow-lg shadow-amber-500/20 transition cursor-pointer flex items-center gap-2">
+                <span>Avançar 10 Anos</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+            </button>
+            <button id="btnReset" onclick="resetSimulation()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-2.5 rounded-lg text-sm transition cursor-pointer border border-gray-700">
+                Reiniciar
+            </button>
+        </div>
     </header>
 
-    <div class="main-container">
-        <!-- PAINEL LATERAL -->
-        <aside class="control-panel">
-            <div class="kardashev-box">
-                <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Métrica de Kardashev</div>
-                <div class="kardashev-score" id="k-score">K 2.000</div>
-                <div style="font-size: 0.78rem; color: var(--accent-gold);" id="power-display">1.00 × 10²⁶ W</div>
-            </div>
-
-            <div class="section-title">1. Enxame e Captura Solar</div>
-            
-            <div class="metric-group">
-                <div class="metric-header">
-                    <span>Fluxo Energético Capturado (10²⁶ W)</span>
-                    <span class="metric-value" id="val-power">1.0 × 10²⁶ W</span>
+    <!-- Main Grid -->
+    <main class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+        
+        <!-- Left Column: Controls & Construction Engine -->
+        <section class="space-y-6">
+            <!-- Energy Metric -->
+            <div class="card p-5 rounded-xl glow-gold solar-glow border-amber-500/30">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xs font-bold text-amber-400 uppercase tracking-wider">⚡ Captação Estelar</h2>
+                    <span id="dysonCoverage" class="text-xs font-mono text-amber-300">12.5% do Sol</span>
                 </div>
-                <input type="range" id="input-power" min="1.0" max="10.0" step="0.1" value="1.0">
-            </div>
-
-            <div class="metric-group">
-                <div class="metric-header">
-                    <span>Densidade de Satélites do Enxame</span>
-                    <span class="metric-value" id="val-density">100%</span>
+                <div class="text-2xl md:text-3xl font-mono font-bold text-amber-300 mb-1" id="wattsDisplay">
+                    4.82 × 10²⁵ W
                 </div>
-                <input type="range" id="input-density" min="20" max="100" value="100">
+                <p class="text-xs text-gray-400">Meta do Nível 2.0: Captura total de ~3.86 × 10²⁶ Watts.</p>
             </div>
 
-            <div class="section-title">2. Infraestrutura e Megasestruturas</div>
+            <!-- Controls -->
+            <div class="card p-5 rounded-xl space-y-5">
+                <h2 class="text-md font-bold text-amber-400 flex items-center gap-2">
+                    <span>🛠️ Engenharia de Megaescala</span>
+                </h2>
+                
+                <!-- Mercury Mining Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-sm mb-1">
+                        <span class="font-medium text-gray-200">Mineração de Mercúrio (Von Neumann)</span>
+                        <span id="mercuryVal" class="font-mono text-amber-400">25%</span>
+                    </div>
+                    <input type="range" id="mercurySlider" min="0" max="100" value="25" class="w-full custom-slider-gold" oninput="updateSimulation()">
+                    <p class="text-xs text-gray-400 mt-1">Desmantelamento automatizado de Mercúrio para construção de satélites do Enxame.</p>
+                </div>
 
-            <div class="toggle-box">
-                <span>Feixes de Transmissão por Laser/Micro-ondas</span>
-                <label class="switch"><input type="checkbox" id="sw-beams" checked><span class="slider"></span></label>
+                <!-- Star Lifting Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-sm mb-1">
+                        <span class="font-medium text-gray-200">Levantamento Estelar (Star Lifting)</span>
+                        <span id="starLiftingVal" class="font-mono text-amber-400">15%</span>
+                    </div>
+                    <input type="range" id="starLiftingSlider" min="0" max="100" value="15" class="w-full custom-slider-gold" oninput="updateSimulation()">
+                    <p class="text-xs text-gray-400 mt-1">Extração magnética direta de hidrogênio/hélio da atmosfera solar.</p>
+                </div>
+
+                <!-- Matrioshka Brain Slider -->
+                <div>
+                    <div class="flex justify-between items-center text-sm mb-1">
+                        <span class="font-medium text-gray-200">Cérebro de Matrioshka</span>
+                        <span id="matrioshkaVal" class="font-mono text-purple-400">10%</span>
+                    </div>
+                    <input type="range" id="matrioshkaSlider" min="0" max="100" value="10" class="w-full custom-slider-gold" oninput="updateSimulation()">
+                    <p class="text-xs text-gray-400 mt-1">Alocação de energia do Enxame para simulações ecossistêmicas e mentes digitais.</p>
+                </div>
             </div>
 
-            <div class="toggle-box">
-                <span>Escudo Planetário Interceptador de Meteoros</span>
-                <label class="switch"><input type="checkbox" id="sw-defense" checked><span class="slider"></span></label>
+            <!-- Stellar Status Indicators -->
+            <div class="card p-5 rounded-xl space-y-3">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Status das Megastruturas</h3>
+                
+                <div class="flex justify-between items-center text-xs bg-gray-900/60 p-2.5 rounded border border-gray-800">
+                    <span>Massa de Mercúrio Restante:</span>
+                    <span id="mercuryMassRemaining" class="font-mono text-amber-400 font-bold">75.0%</span>
+                </div>
+
+                <div class="flex justify-between items-center text-xs bg-gray-900/60 p-2.5 rounded border border-gray-800">
+                    <span>Brilho Infravermelho Residual:</span>
+                    <span id="irSignature" class="font-mono text-cyan-400 font-bold">Moderado (Alta emissão de calor)</span>
+                </div>
+
+                <div class="flex justify-between items-center text-xs bg-gray-900/60 p-2.5 rounded border border-gray-800">
+                    <span>Capacidade de Processamento Quântico:</span>
+                    <span id="quantumPetaflops" class="font-mono text-purple-400 font-bold">1.2 × 10⁴⁰ FLOPS</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Center Column: Solar System Domain Map -->
+        <section class="space-y-6">
+            <div class="card p-5 rounded-xl">
+                <h2 class="text-lg font-bold text-amber-400 mb-4">🪐 Estado dos Corpos Celestes</h2>
+                
+                <div class="space-y-3 text-sm">
+                    <!-- Sun -->
+                    <div class="p-3 bg-gray-900/50 rounded-lg border border-gray-800">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-amber-300">☀️ O Sol (Enxame de Dyson)</span>
+                            <span id="sunBadge" class="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Enxame Parcial</span>
+                        </div>
+                        <p id="sunDesc" class="text-xs text-gray-300">Bilhões de coletores ópticos de grafeno transmitindo energia via lasers infravermelhos.</p>
+                    </div>
+
+                    <!-- Earth -->
+                    <div class="p-3 bg-gray-900/50 rounded-lg border border-gray-800">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-emerald-300">🌍 Terra</span>
+                            <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Reserva Histórica</span>
+                        </div>
+                        <p class="text-xs text-gray-300">Zero indústrias pesadas. Preservação ecológica total e centro administrativo solar.</p>
+                    </div>
+
+                    <!-- Mars & Venus -->
+                    <div class="p-3 bg-gray-900/50 rounded-lg border border-gray-800">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-cyan-300">♂️♀️ Marte & Vênus</span>
+                            <span id="terraformBadge" class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Terraformação em Andamento</span>
+                        </div>
+                        <p id="terraformDesc" class="text-xs text-gray-300">Campo magnético artificial em Marte ativo; resfriamento e neutralização de gases em Vênus.</p>
+                    </div>
+
+                    <!-- Gas Giants -->
+                    <div class="p-3 bg-gray-900/50 rounded-lg border border-gray-800">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-orange-300">🪐 Júpiter & Saturno</span>
+                            <span class="text-xs px-2 py-0.5 rounded bg-orange-500/20 text-orange-300 border border-orange-500/30">Refinaria de Combustível</span>
+                        </div>
+                        <p class="text-xs text-gray-300">Sondas mineradoras extraindo hidrogênio e hélio-3 para frotas de fusão/antimatéria.</p>
+                    </div>
+
+                    <!-- O'Neill Cylinders -->
+                    <div class="p-3 bg-gray-900/50 rounded-lg border border-gray-800">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-purple-300">🏗️ Cilindros de O'Neill & Habitats</span>
+                            <span id="habitatBadge" class="text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">8.2 Bilhões de Habitantes</span>
+                        </div>
+                        <p class="text-xs text-gray-300">A maior parte da população humana reside em megastruturas rotatórias no espaço.</p>
+                    </div>
+                </div>
             </div>
 
-            <div class="toggle-box">
-                <span>Cérebro Matrioshka (Supercomputador)</span>
-                <label class="switch"><input type="checkbox" id="sw-matrioshka" checked><span class="slider"></span></label>
+            <!-- Interstellar Missions Log -->
+            <div class="card p-5 rounded-xl">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-md font-bold text-gray-200">🚀 Frotas Interstelares (Alpha Centauri)</h3>
+                    <button onclick="launchInterstellarMission()" class="text-xs bg-cyan-600 hover:bg-cyan-500 px-2.5 py-1 rounded text-white font-semibold transition">
+                        Lançar Sonda de Vóton (0.15c)
+                    </button>
+                </div>
+                <div id="simLog" class="h-36 overflow-y-auto space-y-2 text-xs font-mono bg-gray-950/80 p-3 rounded border border-gray-800">
+                    <p class="text-amber-400">[Ano 2200] Era Estelar Iniciada. Enxame de Dyson em expansão contínua em Mercúrio.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Graphs & Future Trajectory -->
+        <section class="space-y-6">
+            <div class="card p-5 rounded-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-amber-400 mb-1">📈 Curva de Captura Energética</h2>
+                    <p class="text-xs text-gray-400 mb-4">Evolução do Enxame de Dyson e consumo computacional.</p>
+                </div>
+                <div class="h-64">
+                    <canvas id="energyChart"></canvas>
+                </div>
             </div>
 
-            <div class="section-title">3. Diagnóstico de Capacidades</div>
-            <div class="info-card">
-                <strong>Status de Capacidade Tecnológica:</strong><br>
-                • <strong>Imunidade Extintiva:</strong> Defesas ativas contra cometas, eras glaciais e erupções solares.<br>
-                • <strong>Poder Computacional:</strong> ~<span id="comp-flops">1.0 × 10⁴⁵</span> FLOPS (Processamento Computronium).<br>
-                • <strong>Colonização Planetária:</strong> Terraformação ativa concluída em Marte e na Lua.
+            <div id="outcomeBox" class="card p-5 rounded-xl border-amber-500/40">
+                <h3 id="outcomeTitle" class="font-bold text-md text-amber-400 mb-1">Domínio do Sistema Solar</h3>
+                <p id="outcomeText" class="text-xs text-gray-300 leading-relaxed">
+                    O Enxame de Dyson está capturando energia suficiente para alimentar a terraformação planetária e sustentar a rede quântica do Cérebro de Matrioshka.
+                </p>
             </div>
-        </aside>
+        </section>
 
-        <!-- VIEWPORT CANVAS SIMULAÇÃO -->
-        <main class="viewport">
-            <canvas id="simCanvas"></canvas>
-
-            <div class="hud-overlay">
-                <div class="hud-line"><span>RADIAÇÃO SOLAR RETIDA:</span><span id="hud-capture" style="color: var(--accent-gold)">100%</span></div>
-                <div class="hud-line"><span>AMEAÇAS EXTERNAS:</span><span id="hud-defense" style="color: var(--accent-green)">NEUTRALIZADAS (100%)</span></div>
-                <div class="hud-line"><span>PROCESSAMENTO VIRTUAL:</span><span id="hud-comp" style="color: var(--accent-purple)">ILIMITADO</span></div>
-                <div class="hud-line"><span>HORIZONTE TEMPORAL:</span><span style="color: var(--accent-cyan)">ANO ~3500+</span></div>
-            </div>
-        </main>
-    </div>
+    </main>
 
     <script>
-        const canvas = document.getElementById('simCanvas');
-        const ctx = canvas.getContext('2d');
+        let currentYear = 2200;
+        let kardashevLevel = 2.000;
+        let mercuryMassPct = 75.0;
+        let interstellarMissionsLaunched = 0;
 
-        // Estado da Simulação
-        const state = {
-            powerWatts: 1e26,
-            densityPercent: 100,
-            kardashevScale: 2.0,
-            showBeams: true,
-            defenseActive: true,
-            matrioshkaActive: true,
-            rotationAngle: 0,
-            pulse: 0
-        };
-
-        function resizeCanvas() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // Elementos de Entrada
-        const inputPower = document.getElementById('input-power');
-        const inputDensity = document.getElementById('input-density');
-        const swBeams = document.getElementById('sw-beams');
-        const swDefense = document.getElementById('sw-defense');
-        const swMatrioshka = document.getElementById('sw-matrioshka');
-
-        // Geração de Coletores da Esfera / Enxame de Dyson
-        const dysonSwarm = [];
-        const MAX_SWARM = 280;
-        for (let i = 0; i < MAX_SWARM; i++) {
-            dysonSwarm.push({
-                radius: 80 + Math.random() * 65,
-                angle: Math.random() * Math.PI * 2,
-                speed: (0.002 + Math.random() * 0.004) * (Math.random() > 0.5 ? 1 : -1),
-                size: 2 + Math.random() * 2.5,
-                inclination: (Math.random() - 0.5) * 0.6
-            });
-        }
-
-        // Asteroides de Teste para o Sistema de Defesa
-        const asteroids = [];
-        for (let i = 0; i < 4; i++) {
-            asteroids.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                vx: (Math.random() - 0.5) * 1.2,
-                vy: (Math.random() - 0.5) * 1.2,
-                destroyed: false,
-                laserTimer: 0
-            });
-        }
-
-        // Atualização dos Cálculos Físicos e Matemáticos
-        function updatePhysics() {
-            const mult = parseFloat(inputPower.value); // 1.0 a 10.0
-            state.powerWatts = mult * 1e26; // 10^26 a 10^27 W
-
-            state.densityPercent = parseInt(inputDensity.value);
-
-            // Fórmula de Kardashev: K = (log10(P) - 6) / 10
-            state.kardashevScale = (Math.log10(state.powerWatts) - 6) / 10;
-
-            state.showBeams = swBeams.checked;
-            state.defenseActive = swDefense.checked;
-            state.matrioshkaActive = swMatrioshka.checked;
-
-            // Interface
-            document.getElementById('k-score').innerText = `K ${state.kardashevScale.toFixed(3)}`;
-            
-            const displayVal = (state.powerWatts / 1e26).toFixed(2);
-            document.getElementById('power-display').innerText = `${displayVal} × 10²⁶ W`;
-            document.getElementById('val-power').innerText = `${(mult * 1.0).toFixed(1)} × 10²⁶ W`;
-            document.getElementById('val-density').innerText = `${state.densityPercent}%`;
-
-            // FLOPS
-            const flopsVal = (mult * 1.0).toFixed(1);
-            document.getElementById('comp-flops').innerText = `${flopsVal} × 10⁴⁵`;
-
-            // HUD
-            document.getElementById('hud-capture').innerText = `${state.densityPercent}%`;
-            
-            const defHUD = document.getElementById('hud-defense');
-            defHUD.innerText = state.defenseActive ? 'NEUTRALIZADAS (100%)' : 'DESATIVADO (VULNERÁVEL)';
-            defHUD.style.color = state.defenseActive ? 'var(--accent-green)' : '#ef4444';
-
-            const compHUD = document.getElementById('hud-comp');
-            compHUD.innerText = state.matrioshkaActive ? 'ILIMITADO (CÉREBRO MATRIOSHKA)' : 'CONVENCIONAL';
-            compHUD.style.color = state.matrioshkaActive ? 'var(--accent-purple)' : 'var(--text-muted)';
-        }
-
-        // Eventos
-        inputPower.addEventListener('input', updatePhysics);
-        inputDensity.addEventListener('input', updatePhysics);
-        swBeams.addEventListener('change', updatePhysics);
-        swDefense.addEventListener('change', updatePhysics);
-        swMatrioshka.addEventListener('change', updatePhysics);
-
-        // Loop de Renderização no Canvas
-        function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-            const sunRadius = 45;
-
-            state.rotationAngle += 0.002;
-            state.pulse += 0.03;
-
-            // 1. Grade de Fundo Sci-Fi
-            ctx.strokeStyle = 'rgba(245, 158, 11, 0.03)';
-            ctx.lineWidth = 1;
-            const gridSize = 50;
-            for (let x = 0; x < canvas.width; x += gridSize) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-            }
-            for (let y = 0; y < canvas.height; y += gridSize) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-            }
-
-            // 2. Órbitas Planetárias
-            const orbitEarthRadius = 240;
-            const orbitMarsRadius = 310;
-
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.arc(cx, cy, orbitEarthRadius, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath(); ctx.arc(cx, cy, orbitMarsRadius, 0, Math.PI * 2); ctx.stroke();
-
-            // 3. Estrela Hospedeira (Sol)
-            const sunGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, sunRadius + 15);
-            sunGrad.addColorStop(0, '#ffffff');
-            sunGrad.addColorStop(0.3, '#fef08a');
-            sunGrad.addColorStop(0.7, '#f59e0b');
-            sunGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
-
-            ctx.beginPath();
-            ctx.arc(cx, cy, sunRadius + 15, 0, Math.PI * 2);
-            ctx.fillStyle = sunGrad;
-            ctx.fill();
-
-            // 4. Camadas do Cérebro Matrioshka (Se Ativo)
-            if (state.matrioshkaActive) {
-                for (let r = 0; r < 3; r++) {
-                    const mRadius = sunRadius + 22 + r * 12;
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, mRadius, 0, Math.PI * 2);
-                    ctx.strokeStyle = `rgba(168, 85, 247, ${0.25 - r * 0.06 + Math.sin(state.pulse + r) * 0.05})`;
-                    ctx.lineWidth = 1.5;
-                    ctx.setLineDash([4, 6]);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
+        let ctx = document.getElementById('energyChart').getContext('2d');
+        let chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [2200],
+                datasets: [
+                    {
+                        label: 'Kardashev Level',
+                        data: [2.000],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                        yAxisID: 'y',
+                        tension: 0.2,
+                        fill: true
+                    },
+                    {
+                        label: 'Massa Restante Mercúrio (%)',
+                        data: [75.0],
+                        borderColor: '#06b6d4',
+                        borderDash: [4, 4],
+                        yAxisID: 'y1',
+                        tension: 0.2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: '#1e293b' }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        min: 1.95,
+                        max: 2.30,
+                        ticks: { color: '#f59e0b' },
+                        grid: { color: '#1e293b' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        min: 0,
+                        max: 100,
+                        ticks: { color: '#06b6d4' },
+                        grid: { drawOnChartArea: false }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#f3f4f6', boxWidth: 10 } }
                 }
             }
+        });
 
-            // 5. Enxame de Dyson (Satélites Coletores Orbitais)
-            const activeSwarmCount = Math.floor((state.densityPercent / 100) * MAX_SWARM);
-            for (let i = 0; i < activeSwarmCount; i++) {
-                const sat = dysonSwarm[i];
-                sat.angle += sat.speed;
+        function updateSimulation() {
+            let mercuryMining = parseInt(document.getElementById('mercurySlider').value);
+            let starLifting = parseInt(document.getElementById('starLiftingSlider').value);
+            let matrioshka = parseInt(document.getElementById('matrioshkaSlider').value);
 
-                const x = cx + Math.cos(sat.angle) * sat.radius;
-                const y = cy + Math.sin(sat.angle) * (sat.radius * (1 + sat.inclination * 0.3));
+            document.getElementById('mercuryVal').innerText = mercuryMining + '%';
+            document.getElementById('starLiftingVal').innerText = starLifting + '%';
+            document.getElementById('matrioshkaVal').innerText = matrioshka + '%';
 
-                ctx.beginPath();
-                ctx.arc(x, y, sat.size, 0, Math.PI * 2);
-                ctx.fillStyle = '#fbbf24';
-                ctx.shadowColor = '#f59e0b';
-                ctx.shadowBlur = 6;
-                ctx.fill();
-                ctx.shadowBlur = 0;
+            // Calculations
+            let coveragePct = Math.min(100, (mercuryMining * 0.75) + (starLifting * 0.25));
+            let totalWattsExponent = 25.0 + (coveragePct / 100);
+            let totalWattsCoeff = (3.86 * (coveragePct / 100) + 0.1).toFixed(2);
 
-                // Conexões Energéticas do Enxame
-                if (i % 8 === 0 && state.showBeams) {
-                    ctx.beginPath();
-                    ctx.moveTo(cx, cy);
-                    ctx.lineTo(x, y);
-                    ctx.strokeStyle = `rgba(245, 158, 11, ${0.12 + Math.sin(state.pulse + i) * 0.05})`;
-                    ctx.lineWidth = 0.8;
-                    ctx.stroke();
-                }
-            }
+            document.getElementById('dysonCoverage').innerText = coveragePct.toFixed(1) + '% do Sol';
+            document.getElementById('wattsDisplay').innerText = `${totalWattsCoeff} × 10²⁶ W`;
 
-            // 6. Planetas Colonizados
-            // Terra
-            const earthAngle = state.rotationAngle * 0.8;
-            const ex = cx + Math.cos(earthAngle) * orbitEarthRadius;
-            const ey = cy + Math.sin(earthAngle) * orbitEarthRadius;
+            // Quantum flops calculation
+            let flopsExp = 38 + Math.floor(matrioshka / 10);
+            document.getElementById('quantumPetaflops').innerText = `1.2 × 10⁴${flopsExp % 10} FLOPS`;
 
-            // Escudo Planetário da Terra
-            if (state.defenseActive) {
-                ctx.beginPath();
-                ctx.arc(ex, ey, 14, 0, Math.PI * 2);
-                ctx.strokeStyle = `rgba(56, 189, 248, ${0.5 + Math.sin(state.pulse) * 0.2})`;
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-            }
-
-            ctx.beginPath();
-            ctx.arc(ex, ey, 9, 0, Math.PI * 2);
-            ctx.fillStyle = '#38bdf8';
-            ctx.shadowColor = '#38bdf8';
-            ctx.shadowBlur = 10;
-            ctx.fill();
-            ctx.shadowBlur = 0;
-
-            // Marte (Terraformado)
-            const marsAngle = state.rotationAngle * 0.5 + 2;
-            const mx = cx + Math.cos(marsAngle) * orbitMarsRadius;
-            const my = cy + Math.sin(marsAngle) * orbitMarsRadius;
-
-            ctx.beginPath();
-            ctx.arc(mx, my, 7, 0, Math.PI * 2);
-            ctx.fillStyle = '#10b981'; // Verde indicando terraformação
-            ctx.shadowColor = '#10b981';
-            ctx.shadowBlur = 8;
-            ctx.fill();
-            ctx.shadowBlur = 0;
-
-            // 7. Feixes Principais de Transmissão Estelar para os Planetas
-            if (state.showBeams) {
-                // Feixe para a Terra
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(ex, ey);
-                ctx.strokeStyle = `rgba(56, 189, 248, ${0.35 + Math.sin(state.pulse * 1.5) * 0.15})`;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // Feixe para Marte
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(mx, my);
-                ctx.strokeStyle = `rgba(16, 185, 129, ${0.35 + Math.sin(state.pulse * 1.5) * 0.15})`;
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-            }
-
-            // 8. Simulação de Defesa Ativa Contra Asteroides
-            asteroids.forEach(ast => {
-                ast.x += ast.vx;
-                ast.y += ast.vy;
-
-                // Loop nas bordas
-                if (ast.x < 0) ast.x = canvas.width;
-                if (ast.x > canvas.width) ast.x = 0;
-                if (ast.y < 0) ast.y = canvas.height;
-                if (ast.y > canvas.height) ast.y = 0;
-
-                // Desenhar Asteroide
-                ctx.beginPath();
-                ctx.arc(ast.x, ast.y, 4, 0, Math.PI * 2);
-                ctx.fillStyle = '#94a3b8';
-                ctx.fill();
-
-                // Interceptação por Laser da Esfera de Dyson se estiver próximo e a defesa ativa
-                const distToEarth = Math.hypot(ast.x - ex, ast.y - ey);
-                if (state.defenseActive && distToEarth < 180) {
-                    ctx.beginPath();
-                    ctx.moveTo(ex, ey);
-                    ctx.lineTo(ast.x, ast.y);
-                    ctx.strokeStyle = '#ef4444';
-                    ctx.lineWidth = 1.5;
-                    ctx.stroke();
-
-                    // Explosão / Neutralização
-                    ctx.beginPath();
-                    ctx.arc(ast.x, ast.y, 8, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(239, 68, 68, 0.5)';
-                    ctx.fill();
-                }
-            });
-
-            requestAnimationFrame(render);
+            // State updates
+            updateBadges(coveragePct, mercuryMining, starLifting);
         }
 
-        // Inicialização
-        updatePhysics();
-        render();
+        function updateBadges(coverage, mercury, lifting) {
+            let sunBadge = document.getElementById('sunBadge');
+            let sunDesc = document.getElementById('sunDesc');
+            if (coverage > 80) {
+                sunBadge.innerText = "Enxame Quase Completo";
+                sunBadge.className = "text-xs px-2 py-0.5 rounded bg-amber-500/30 text-amber-200 border border-amber-400/50";
+                sunDesc.innerText = "O Sol brilha prioritariamente no espectro infravermelho para observadores externos.";
+            } else if (coverage > 40) {
+                sunBadge.innerText = "Enxame Avançado";
+                sunBadge.className = "text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30";
+                sunDesc.innerText = "Densa nuvem de coletores leves redirecionando lasers para todos os planetas e luas.";
+            } else {
+                sunBadge.innerText = "Enxame Parcial";
+                sunBadge.className = "text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30";
+                sunDesc.innerText = "Bilhões de coletores ópticos de grafeno transmitindo energia via lasers infravermelhos.";
+            }
+
+            let terraformBadge = document.getElementById('terraformBadge');
+            let terraformDesc = document.getElementById('terraformDesc');
+            if (coverage > 50) {
+                terraformBadge.innerText = "Terraformação Concluída";
+                terraformBadge.className = "text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                terraformDesc.innerText = "Marte e Vênus possuem oceanos estáveis, campos magnéticos e atmosferas respiráveis.";
+            } else {
+                terraformBadge.innerText = "Terraformação em Andamento";
+                terraformBadge.className = "text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30";
+                terraformDesc.innerText = "Campo magnético artificial em Marte ativo; resfriamento e neutralização de gases em Vênus.";
+            }
+        }
+
+        function advanceYear() {
+            currentYear += 10;
+
+            let mercuryMining = parseInt(document.getElementById('mercurySlider').value);
+            let starLifting = parseInt(document.getElementById('starLiftingSlider').value);
+
+            // Deplete Mercury mass slowly
+            mercuryMassPct = Math.max(0, Math.round((mercuryMassPct - (mercuryMining * 0.15)) * 10) / 10);
+            document.getElementById('mercuryMassRemaining').innerText = mercuryMassPct.toFixed(1) + '%';
+
+            // Increase Kardashev Level
+            let deltaK = (mercuryMining * 0.001) + (starLifting * 0.0008);
+            kardashevLevel = Math.min(2.10, Math.round((kardashevLevel + deltaK) * 1000) / 1000);
+            document.getElementById('kardashevDisplay').innerText = kardashevLevel.toFixed(3);
+
+            // Log
+            let log = document.getElementById('simLog');
+            let newLog = document.createElement('p');
+            newLog.className = "text-amber-300";
+            newLog.innerText = `[Ano ${currentYear}] Kardashev: ${kardashevLevel.toFixed(3)} | Massa Mercúrio: ${mercuryMassPct}% | Enxame Ativo.`;
+            log.prepend(newLog);
+
+            // Update Chart
+            chart.data.labels.push(currentYear);
+            chart.data.datasets[0].data.push(kardashevLevel);
+            chart.data.datasets[1].data.push(mercuryMassPct);
+            chart.update();
+
+            checkOutcome();
+        }
+
+        function launchInterstellarMission() {
+            interstellarMissionsLaunched++;
+            let log = document.getElementById('simLog');
+            let newLog = document.createElement('p');
+            newLog.className = "text-cyan-400 font-bold";
+            newLog.innerText = `[Ano ${currentYear}] Frota #${interstellarMissionsLaunched} com propulsão por Velas de Fóton enviada rumo a Alpha Centauri (0.18c).`;
+            log.prepend(newLog);
+        }
+
+        function checkOutcome() {
+            let title = document.getElementById('outcomeTitle');
+            let text = document.getElementById('outcomeText');
+            let box = document.getElementById('outcomeBox');
+
+            if (kardashevLevel >= 2.05) {
+                title.innerText = "✨ Civilização Estelar Plena (Tipo II)";
+                title.className = "font-bold text-md text-amber-300 mb-1";
+                box.className = "card p-5 rounded-xl border-amber-500/60 bg-amber-950/20";
+                text.innerText = "O Sol foi completamente dominado. A humanidade expandiu seus horizontes e as primeiras colônias em Alpha Centauri estão estabelecidas.";
+            } else if (mercuryMassPct === 0) {
+                title.innerText = "💥 Mercúrio Totalmente Consumido";
+                title.className = "font-bold text-md text-cyan-300 mb-1";
+                text.innerText = "Mercúrio foi completamente convertido nos satélites do Enxame de Dyson e nos supercomputadores do Cérebro de Matrioshka.";
+            }
+        }
+
+        function resetSimulation() {
+            currentYear = 2200;
+            kardashevLevel = 2.000;
+            mercuryMassPct = 75.0;
+            interstellarMissionsLaunched = 0;
+
+            document.getElementById('mercurySlider').value = 25;
+            document.getElementById('starLiftingSlider').value = 15;
+            document.getElementById('matrioshkaSlider').value = 10;
+
+            document.getElementById('simLog').innerHTML = '<p class="text-amber-400">[Ano 2200] Simulação reiniciada no Nível Kardashev 2.000.</p>';
+
+            chart.data.labels = [2200];
+            chart.data.datasets[0].data = [2.000];
+            chart.data.datasets[1].data = [75.0];
+            chart.update();
+
+            updateSimulation();
+            document.getElementById('kardashevDisplay').innerText = '2.000';
+            document.getElementById('mercuryMassRemaining').innerText = '75.0%';
+        }
+
+        // Initial setup
+        updateSimulation();
     </script>
 </body>
 </html>
